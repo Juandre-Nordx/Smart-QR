@@ -18,6 +18,8 @@ class CardTests(TestCase):
         self.assertEqual(self.client.get(reverse("cards:dashboard")).status_code, 302)
         self.client.login(username="staff", password="test-pass")
         self.assertEqual(self.client.get(reverse("cards:dashboard")).status_code, 200)
+    def test_home_redirects_to_dashboard(self):
+        self.assertRedirects(self.client.get(reverse("home")), reverse("cards:dashboard"), fetch_redirect_response=False)
     def test_url_stable_after_edit(self):
         url = self.person.permanent_url(); self.person.first_name="Changed"; self.person.save()
         self.assertEqual(url, self.person.permanent_url())
@@ -44,4 +46,3 @@ class CardTests(TestCase):
         data=io.BytesIO(); Image.new("RGB",(2,2)).save(data,"PNG"); good=SimpleUploadedFile("ok.png",data.getvalue(),content_type="image/png"); self.person.photo=good; self.person.full_clean()
     def test_health(self):
         response=self.client.get(reverse("cards:health")); self.assertEqual(response.status_code,200); self.assertEqual(response.json(),{"status":"ok"})
-

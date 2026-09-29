@@ -40,7 +40,6 @@ The superuser is the development dashboard login at `/admin/login/`; no default 
 | `AWS_S3_REGION_NAME` | Bucket region |
 | `AWS_S3_CUSTOM_DOMAIN` | Optional CDN/public media domain |
 | `AWS_QUERYSTRING_AUTH` | Signed media URLs; default `false` |
-| `PORT` | Gunicorn port; Railway provides it |
 
 Development uploads use `media/`. In the Railway setup below, production uploads
 are stored on a persistent application volume mounted at `/data`.
@@ -87,8 +86,8 @@ python -c "import secrets; print(secrets.token_urlsafe(64))"
 
 `ALLOWED_HOSTS` contains hostnames only (no `https://` or path), while
 `CSRF_TRUSTED_ORIGINS` and `PUBLIC_BASE_URL` must include `https://`. For more
-than one hostname, separate values with commas. Do not set `PORT`; Railway
-injects it.
+than one hostname, separate values with commas. No `PORT` environment variable
+is needed; the application and Railway target port are both set to `8000` below.
 
 ### 3. Attach the image volume
 
@@ -148,15 +147,66 @@ images.
 
 ### 4. Generate a domain and deploy
 
+Railway normally reads both commands from `railway.json`, so the command fields
+in the dashboard may be left empty. Keep the default **Railpack** builder shown
+in the dashboard. If Railway does not detect the repository configuration, enter
+these commands manually under **Smart-QR > Settings**:
+
+**Custom Build Command**
+
+```bash
+python manage.py collectstatic --noinput
+```
+
+**Start Command** (in the Deploy section)
+
+```bash
+python manage.py migrate --noinput && gunicorn smartqr.wsgi:application --bind 0.0.0.0:8000
+```
+
+Do not put the start command in the build-command field. The build command
+collects CSS and other static assets into the application image. The start
+command runs database migrations against the attached PostgreSQL service and
+then starts the web server on internal port **8000**.
+
 1. Open **Smart-QR > Settings > Networking**, click **Generate Domain**, and copy
-   the HTTPS hostname.
+   the HTTPS hostname. If Railway asks for a **target port** or **internal port**,
+   enter `8000`. Do not enter `80` or `443`; Railway handles public HTTP and
+   HTTPS and forwards that traffic to the app on port 8000.
 2. Put that exact hostname into the three URL/host variables in step 2. Railway
    will redeploy when variables change.
-3. Railway reads `railway.json`. The build collects static files, and the start
-   command runs database migrations before starting Gunicorn. The health check
+3. Confirm the latest deployment says it loaded `railway.json`. The health check
    is `/health/`.
 4. Watch the deployment logs. A successful deployment ends with Gunicorn
-   listening on Railway's injected `PORT`, and the service changes to **Online**.
+   listening at `0.0.0.0:8000`, and the service changes to **Online**.
+
+### Open the site
+
+For the domain shown in the Railway networking screen, open:
+
+```text
+https://smart-qr-production.up.railway.app/
+```
+
+Use `https://` and do not add `:8000` to the public URL. Port `8000` is only the
+private target between Railway's proxy and Gunicorn. The home URL redirects to
+the staff dashboard and then to the administrator login when you are signed
+out. You can also open the login directly at:
+
+```text
+https://smart-qr-production.up.railway.app/admin/login/
+```
+
+To confirm the deployment is alive without logging in, visit:
+
+```text
+https://smart-qr-production.up.railway.app/health/
+```
+
+It should return `{"status": "ok"}`. If the domain displays an application
+error, first confirm the deployment is **Online**, the networking target is
+`8000`, and `ALLOWED_HOSTS` is exactly
+`smart-qr-production.up.railway.app` (without `https://`).
 
 For a custom domain, add it under **Settings > Networking > Custom Domain**, add
 the DNS record Railway displays at the DNS provider, and then replace the
