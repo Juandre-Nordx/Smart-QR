@@ -17,7 +17,9 @@ DATABASES = {"default": dj_database_url.config(default=f"sqlite:///{BASE_DIR / '
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = "en-za"; TIME_ZONE = "Africa/Johannesburg"; USE_I18N = True; USE_TZ = True
 STATIC_URL = "/static/"; STATIC_ROOT = BASE_DIR / "staticfiles"; STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-MEDIA_URL = "/media/"; MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", BASE_DIR / "media"))
+SERVE_MEDIA = os.getenv("SERVE_MEDIA", str(DEBUG)).lower() in {"1", "true", "yes"}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "/admin/login/"; LOGIN_REDIRECT_URL = "/dashboard/"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -33,4 +35,3 @@ if not DEBUG and os.getenv("AWS_STORAGE_BUCKET_NAME"):
     AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
     AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN") or None
     AWS_QUERYSTRING_AUTH = os.getenv("AWS_QUERYSTRING_AUTH", "false").lower() == "true"
-
