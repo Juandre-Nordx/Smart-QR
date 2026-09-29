@@ -1,0 +1,15 @@
+import cards.models
+import django.db.models.deletion
+import uuid
+from django.db import migrations, models
+
+class Migration(migrations.Migration):
+    initial = True
+    dependencies = []
+    operations = [
+        migrations.CreateModel(name="Company", fields=[
+            ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")), ("name", models.CharField(max_length=200)), ("legal_name", models.CharField(blank=True, max_length=200)), ("registration_number", models.CharField(blank=True, max_length=100)), ("vat_number", models.CharField(blank=True, max_length=100)), ("billing_email", models.EmailField(blank=True, max_length=254)), ("billing_contact_name", models.CharField(blank=True, max_length=200)), ("billing_phone", models.CharField(blank=True, max_length=50)), ("email", models.EmailField(blank=True, max_length=254)), ("phone", models.CharField(blank=True, max_length=50)), ("website", models.URLField(blank=True)), ("address", models.TextField(blank=True)), ("logo", models.ImageField(blank=True, upload_to="companies/logos/", validators=[cards.models.validate_image])), ("primary_color", models.CharField(default="#17324d", max_length=7)), ("secondary_color", models.CharField(default="#ffffff", max_length=7)), ("created_at", models.DateTimeField(auto_now_add=True)), ("updated_at", models.DateTimeField(auto_now=True))], options={"ordering": ["name"]}),
+        migrations.CreateModel(name="Person", fields=[
+            ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")), ("public_id", models.UUIDField(db_index=True, default=uuid.uuid4, editable=False, unique=True)), ("first_name", models.CharField(max_length=100)), ("last_name", models.CharField(max_length=100)), ("position", models.CharField(blank=True, max_length=150)), ("biography", models.TextField(blank=True)), ("photo", models.ImageField(blank=True, upload_to="people/photos/", validators=[cards.models.validate_image])), ("mobile_phone", models.CharField(blank=True, max_length=50)), ("work_phone", models.CharField(blank=True, max_length=50)), ("whatsapp_number", models.CharField(blank=True, max_length=50)), ("email", models.EmailField(blank=True, max_length=254)), ("website", models.URLField(blank=True)), ("address", models.TextField(blank=True)), ("linkedin_url", models.URLField(blank=True)), ("facebook_url", models.URLField(blank=True)), ("instagram_url", models.URLField(blank=True)), ("x_url", models.URLField(blank=True)), ("youtube_url", models.URLField(blank=True)), ("tiktok_url", models.URLField(blank=True)), ("is_active", models.BooleanField(db_index=True, default=True)), ("created_at", models.DateTimeField(auto_now_add=True)), ("updated_at", models.DateTimeField(auto_now=True)), ("company", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="people", to="cards.company"))], options={"ordering": ["last_name", "first_name"]}),
+        migrations.AddIndex(model_name="person", index=models.Index(fields=["company", "is_active"], name="cards_perso_company_8981c1_idx")),
+    ]
