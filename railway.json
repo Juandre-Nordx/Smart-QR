@@ -1,2 +1,11 @@
-{"$schema":"https://railway.com/railway.schema.json","deploy":{"startCommand":"python manage.py migrate --noinput && gunicorn smartqr.wsgi:application --bind 0.0.0.0:${PORT:-8000}","healthcheckPath":"/health/","healthcheckTimeout":100}}
-
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "buildCommand": "python manage.py collectstatic --noinput"
+  },
+  "deploy": {
+    "startCommand": "python manage.py migrate --noinput && gunicorn smartqr.wsgi:application --bind 0.0.0.0:8000",
+    "healthcheckPath": "/health/",
+    "healthcheckTimeout": 100
+  }
+}
