@@ -32,7 +32,9 @@ The superuser is the development dashboard login at `/admin/login/`; no default 
 | `PUBLIC_BASE_URL` | Canonical HTTPS origin encoded into every QR |
 | `SECURE_COOKIES` | Secure session/CSRF cookies; defaults on outside debug |
 | `SECURE_SSL_REDIRECT` | Set `true` when the platform forwards HTTPS correctly |
-| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | S3 credentials |
+| `MEDIA_ROOT` | Persistent upload directory; use `/data/media` with the Railway volume below |
+| `SERVE_MEDIA` | Serve volume-backed uploads from Django; set `true` on Railway |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Optional S3 credentials instead of a volume |
 | `AWS_STORAGE_BUCKET_NAME` | Enables object media storage when `DEBUG=false` |
 | `AWS_S3_ENDPOINT_URL` | S3-compatible endpoint (AWS, R2, Spaces, etc.) |
 | `AWS_S3_REGION_NAME` | Bucket region |
@@ -40,7 +42,8 @@ The superuser is the development dashboard login at `/admin/login/`; no default 
 | `AWS_QUERYSTRING_AUTH` | Signed media URLs; default `false` |
 | `PORT` | Gunicorn port; Railway provides it |
 
-Development uploads use `media/`. Production uploads require durable S3-compatible storage: ephemeral Railway disks must not hold customer images. Ensure the bucket CORS/public policy matches the chosen signed-URL setting.
+Development uploads use `media/`. In the Railway setup below, production uploads
+are stored on a persistent application volume mounted at `/data`.
 
 ## Railway deployment (step by step)
 
@@ -87,12 +90,44 @@ python -c "import secrets; print(secrets.token_urlsafe(64))"
 than one hostname, separate values with commas. Do not set `PORT`; Railway
 injects it.
 
-### 3. Configure uploaded-image storage
+### 3. Attach the image volume
 
-Profile photos and company logos must survive redeploys. The recommended setup
-is an S3-compatible object bucket (Amazon S3, Cloudflare R2, DigitalOcean Spaces,
-or equivalent), not a volume on the web service. Add these variables to
-Smart-QR:
+Profile photos and company logos must survive redeploys. Attach a **new, separate
+volume** to the Smart-QR service; do not reuse or move the PostgreSQL volume.
+
+1. Open the **Smart-QR** service in Railway.
+2. Open **Variables**, click **+ New Volume** (or add a volume from the project
+   canvas), and enter this exact mount path:
+
+```text
+/data
+```
+
+3. Add these two Smart-QR service variables:
+
+```text
+MEDIA_ROOT=/data/media
+SERVE_MEDIA=true
+```
+
+The app creates the `media` subdirectory when files are uploaded and serves
+those files at `/media/...`. Mounting the volume at `/data` keeps its contents
+separate from application files replaced during a deployment. After saving the
+volume and variables, redeploy Smart-QR.
+
+The final layout is:
+
+```text
+Postgres service  -> postgres-volume (managed by the Postgres template)
+Smart-QR service  -> separate volume mounted at /data
+Uploaded images   -> /data/media
+```
+
+#### Optional: use object storage instead
+
+S3-compatible object storage remains available as an alternative to the
+Smart-QR volume. If using S3, do not create the Smart-QR volume and do not set
+`SERVE_MEDIA=true`; instead add:
 
 ```text
 AWS_ACCESS_KEY_ID=<bucket-access-key>
@@ -108,10 +143,8 @@ you one. With `AWS_QUERYSTRING_AUTH=false`, configure the bucket so uploaded
 objects can be read publicly; alternatively set it to `true` for signed URLs.
 Never commit these credentials.
 
-An application volume is therefore **not required**. The database volume only
-contains PostgreSQL data and does not contain uploaded images. If object storage
-is not configured while `DEBUG=false`, uploads would land on the web container's
-ephemeral filesystem and can disappear on a redeploy.
+The database volume only contains PostgreSQL data and never contains uploaded
+images.
 
 ### 4. Generate a domain and deploy
 
@@ -152,15 +185,15 @@ Check all of the following after the first deployment:
 * `/admin/` accepts the new administrator account.
 * Create a company and person, upload an image, and open the person's public QR
   URL in a private browser window.
-* Redeploy once and verify that the uploaded image still loads from the object
-  bucket.
+* Redeploy once and verify that the uploaded image still loads from the
+  Smart-QR volume (or object bucket, if that alternative was selected).
 * Enable PostgreSQL backups in Railway (or export backups on a schedule) and
-  enable independent bucket versioning/backups. A database backup does not back
-  up uploaded images.
+  back up the Smart-QR volume independently. A database backup does not back up
+  uploaded images.
 
 If deployment fails, first check for a missing `DATABASE_URL`, an
 `ALLOWED_HOSTS` value that incorrectly includes `https://`, a
-`CSRF_TRUSTED_ORIGINS` value that omits `https://`, or invalid bucket
-credentials.
+`CSRF_TRUSTED_ORIGINS` value that omits `https://`, or missing/incorrect
+`MEDIA_ROOT` and `SERVE_MEDIA` values.
 
-V1 defaults are UUID public routes, immutable QR targets, local media only in development, R80 active-card billing, South African locale/timezone, and staff-only management. Back up PostgreSQL and the object bucket independently.
+V1 defaults are UUID public routes, immutable QR targets, R80 active-card billing, South African locale/timezone, and staff-only management. Back up PostgreSQL and uploaded media independently.
