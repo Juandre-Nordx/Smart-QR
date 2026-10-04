@@ -30,6 +30,10 @@
       <span aria-hidden="true">↗</span>
       <span>Share this card</span>
     </button>
+    <button class="tap-share" type="button" hidden>
+      <span class="nfc-icon" aria-hidden="true">)))</span>
+      <span>Tap to share</span>
+    </button>
     <a class="card-promo" href="{% url 'home' %}">Need your own QRD? <strong>Tap me</strong></a>
     <p class="share-status" role="status" aria-live="polite"></p>
   </footer>
@@ -37,7 +41,10 @@
 {% endblock %}
 {% block scripts %}<script>
 const shareButton = document.querySelector('.card-share');
+const nfcButton = document.querySelector('.tap-share');
 const shareStatus = document.querySelector('.share-status');
+
+if ('NDEFReader' in window) nfcButton.hidden = false;
 
 shareButton.addEventListener('click', async () => {
   const shareData = {
@@ -60,6 +67,29 @@ shareButton.addEventListener('click', async () => {
     shareStatus.textContent = 'Card link copied!';
   } catch (error) {
     shareStatus.textContent = `Copy this link: ${shareData.url}`;
+  }
+});
+
+nfcButton.addEventListener('click', async () => {
+  nfcButton.disabled = true;
+  shareStatus.textContent = 'Hold your phone near an NFC tag.';
+
+  try {
+    const ndef = new NDEFReader();
+    await ndef.write({
+      records: [{recordType: 'url', data: shareButton.dataset.shareUrl}],
+    });
+    shareStatus.textContent = 'Card shared to the NFC tag!';
+  } catch (error) {
+    if (error.name === 'NotAllowedError') {
+      shareStatus.textContent = 'Allow NFC access to use tap to share.';
+    } else if (error.name === 'AbortError') {
+      shareStatus.textContent = 'NFC sharing cancelled.';
+    } else {
+      shareStatus.textContent = 'Unable to share with NFC on this device.';
+    }
+  } finally {
+    nfcButton.disabled = false;
   }
 });
 </script>{% endblock %}

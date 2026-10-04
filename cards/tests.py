@@ -152,6 +152,14 @@ class CardTests(TestCase):
         self.assertContains(response, f'href="{reverse("home")}">Need your own QRD?')
         self.assertContains(response, "navigator.share")
 
+    def test_public_card_offers_nfc_sharing_on_supported_devices(self):
+        response = self.client.get(self.person.get_absolute_url())
+        self.assertContains(response, '<button class="tap-share" type="button" hidden>')
+        self.assertContains(response, "Tap to share")
+        self.assertContains(response, "'NDEFReader' in window")
+        self.assertContains(response, "recordType: 'url'")
+        self.assertContains(response, "Hold your phone near an NFC tag.")
+
     def test_unavailable_card_hides_account_navigation_from_logged_in_users(self):
         self.person.is_active = False
         self.person.save()
