@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.urls import include, path, re_path
-from django.views.generic import RedirectView
+from cards.views import landing
 from django.views.static import serve
 from django.conf import settings
 urlpatterns = [
-    path("", RedirectView.as_view(pattern_name="cards:dashboard", permanent=False), name="home"),
+    path("", landing, name="home"),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
     path("", include("cards.urls")),

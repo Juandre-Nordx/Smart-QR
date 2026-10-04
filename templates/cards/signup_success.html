@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block title %}Workspace ready — QRD{% endblock %}
+{% block body_class %}flow-page{% endblock %}
+{% block content %}<section class="success-panel"><div class="success-mark">✓</div><p class="eyebrow">WORKSPACE CREATED</p><h1>Welcome to QRD.</h1><p>{{ company.name }} is ready. Start creating digital identities for your team.</p><a class="button" href="{% url 'cards:company-dashboard' company.pk %}">Open company dashboard →</a></section>{% endblock %}

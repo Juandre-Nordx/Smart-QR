@@ -1,1 +1,33 @@
-{% load static %}<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}Smart QR{% endblock %}</title><link rel="stylesheet" href="{% static 'cards/style.css' %}"></head><body><header><a href="{% url 'cards:dashboard' %}"><strong>Smart QR</strong></a>{% block account_navigation %}{% if user.is_authenticated %}<nav>{% if user.is_staff %}<a href="{% url 'cards:dashboard' %}">Companies</a><a href="{% url 'cards:people' %}">People</a>{% else %}<a href="{% url 'cards:dashboard' %}">My cards</a>{% endif %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="nav-link" type="submit">Log out</button></form></nav>{% endif %}{% endblock %}</header><main>{% block content %}{% endblock %}</main>{% block scripts %}{% endblock %}</body></html>
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="QRD creates premium digital business cards and QR codes for modern teams.">
+  <title>{% block title %}QRD — Digital business cards{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'cards/style.css' %}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <header class="site-header">
+    <a class="wordmark" href="{% url 'home' %}" aria-label="QRD home">QRD</a>
+    {% block account_navigation %}
+      <nav aria-label="Main navigation">
+        {% if user.is_authenticated %}
+          <a href="{% url 'cards:dashboard' %}">Dashboard</a>
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="text-button" type="submit">Log out</button></form>
+        {% else %}
+          <a href="{% url 'login' %}">Login</a>
+          <a class="nav-cta" href="{% url 'cards:signup-start' %}">Get started</a>
+        {% endif %}
+      </nav>
+    {% endblock %}
+  </header>
+  {% if messages %}<div class="messages" role="status">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>{% endif %}
+  <main>{% block content %}{% endblock %}</main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

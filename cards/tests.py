@@ -41,11 +41,7 @@ class CardTests(TestCase):
         self.client.login(username="acme", password="company-pass")
 
         dashboard = self.client.get(reverse("cards:dashboard"))
-        self.assertContains(dashboard, self.company.name)
-        self.assertNotContains(dashboard, other_company.name)
-        self.assertContains(dashboard, "View and share cards")
-        self.assertNotContains(dashboard, "Monthly total")
-        self.assertNotContains(dashboard, "Edit company")
+        self.assertRedirects(dashboard, reverse("cards:company-dashboard", args=[self.company.pk]))
 
         company_dashboard = self.client.get(reverse("cards:company-dashboard", args=[self.company.pk]))
         self.assertContains(company_dashboard, self.person.full_name)
@@ -69,12 +65,15 @@ class CardTests(TestCase):
 
     def test_company_login_page(self):
         response = self.client.get(reverse("login"))
-        self.assertContains(response, "Company dashboard")
+        self.assertContains(response, "Login to QRD")
         login = self.client.post(reverse("login"), {"username": "acme", "password": "company-pass"})
         self.assertRedirects(login, reverse("cards:dashboard"), fetch_redirect_response=False)
 
-    def test_home_redirects_to_dashboard(self):
-        self.assertRedirects(self.client.get(reverse("home")), reverse("cards:dashboard"), fetch_redirect_response=False)
+    def test_home_renders_landing_page_and_pricing(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Your business card")
+        self.assertContains(response, '<div class="price"><span>R</span>80', html=False)
     def test_public_card_hides_account_navigation_from_logged_in_users(self):
         self.client.login(username="staff", password="test-pass")
         response = self.client.get(self.person.get_absolute_url())
@@ -110,7 +109,21 @@ class CardTests(TestCase):
         self.assertEqual(self.client.get(reverse("cards:vcard", args=[self.person.public_id])).status_code, 404)
     def test_counts_and_billing(self):
         Person.objects.create(company=self.company, first_name="Off", last_name="Line", is_active=False)
-        self.assertEqual(self.company.active_card_count, 1); self.assertEqual(self.company.monthly_total, Decimal("80.00"))
+        self.assertEqual(self.company.active_card_count, 1); self.assertEqual(self.company.monthly_total, Decimal("90.00"))
+
+    def test_self_service_signup_creates_company_and_admin(self):
+        self.client.post(reverse("cards:signup", args=["company"]), {"company_name": "Nova Labs", "industry": "Technology"})
+        self.client.post(reverse("cards:signup", args=["admin"]), {"full_name": "Ada Lovelace", "email": "ada@nova.test", "password": "secure-password-123"})
+        self.client.post(reverse("cards:signup", args=["users"]), {"user_count": 7})
+        summary = self.client.get(reverse("cards:signup", args=["summary"]))
+        self.assertContains(summary, "R150")
+        self.client.post(reverse("cards:signup", args=["summary"]))
+        response = self.client.post(reverse("cards:signup", args=["payment"]), {"confirm": "on"})
+        company = Company.objects.get(name="Nova Labs")
+        self.assertRedirects(response, reverse("cards:signup-success", args=[company.pk]))
+        self.assertEqual(company.industry, "Technology")
+        self.assertEqual(company.user_limit, 7)
+        self.assertTrue(company.dashboard_users.filter(username="ada@nova.test").exists())
     def test_image_validation(self):
         bad=SimpleUploadedFile("bad.gif", b"not an image", content_type="image/gif"); self.person.photo=bad
         with self.assertRaises(ValidationError): self.person.full_clean()

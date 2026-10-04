@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 app_name = "cards"
 urlpatterns = [
+ path("signup/", views.signup, name="signup-start"), path("signup/<str:step>/", views.signup, name="signup"),
+ path("signup/success/<int:pk>/", views.signup_success, name="signup-success"),
  path("health/", views.health, name="health"), path("dashboard/", views.dashboard, name="dashboard"),
  path("dashboard/people/", views.people, name="people"), path("dashboard/companies/new/", views.company_create, name="company-create"),
  path("dashboard/companies/<int:pk>/", views.company_dashboard, name="company-dashboard"),
