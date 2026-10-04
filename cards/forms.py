@@ -3,6 +3,20 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from .models import Company, Person
 
+class FlexibleURLField(forms.URLField):
+    """Accept normal web addresses without making users type the scheme."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("required", False)
+        kwargs.setdefault("widget", forms.TextInput(attrs={"placeholder": "example.com"}))
+        super().__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        value = forms.CharField.to_python(self, value)
+        if value and "://" not in value:
+            value = f"https://{value}"
+        return value
+
 class CompanySignupForm(forms.Form):
     company_name = forms.CharField(max_length=200, label="Company name")
     industry = forms.CharField(max_length=120, help_text="For example: Technology, legal, finance")
@@ -33,12 +47,27 @@ class CompanyForm(forms.ModelForm):
     class Meta:
         model = Company
         exclude = ("created_at", "updated_at")
-class PersonForm(forms.ModelForm):
+class PersonLinksForm(forms.ModelForm):
+    """Base person form that accepts links with or without a URL scheme."""
+
+    website = FlexibleURLField(label="Website")
+    linkedin_url = FlexibleURLField(label="LinkedIn URL")
+    facebook_url = FlexibleURLField(label="Facebook URL")
+    instagram_url = FlexibleURLField(label="Instagram URL")
+    x_url = FlexibleURLField(label="X URL")
+    youtube_url = FlexibleURLField(label="YouTube URL")
+    tiktok_url = FlexibleURLField(label="TikTok URL")
+
+    class Meta:
+        model = Person
+        fields = ()
+
+class PersonForm(PersonLinksForm):
     class Meta:
         model = Person
         exclude = ("public_id", "created_at", "updated_at")
 
-class CompanyPersonForm(forms.ModelForm):
+class CompanyPersonForm(PersonLinksForm):
     """Card form for company admins; the company is assigned by the view."""
 
     class Meta:

@@ -59,11 +59,19 @@ class CardTests(TestCase):
         self.client.login(username="acme", password="company-pass")
 
         add_url = reverse("cards:company-person-create", args=[self.company.pk])
-        response = self.client.post(add_url, {"first_name": "New", "last_name": "Teammate", "email": "new@example.test"})
+        response = self.client.post(add_url, {
+            "first_name": "New",
+            "last_name": "Teammate",
+            "email": "new@example.test",
+            "website": "www.example.com",
+            "linkedin_url": "linkedin.com/in/new-teammate",
+        })
         person = Person.objects.get(first_name="New", last_name="Teammate")
         self.assertRedirects(response, reverse("cards:company-dashboard", args=[self.company.pk]))
         self.assertEqual(person.company, self.company)
         self.assertTrue(person.is_active)
+        self.assertEqual(person.website, "https://www.example.com")
+        self.assertEqual(person.linkedin_url, "https://linkedin.com/in/new-teammate")
         self.assertEqual(self.client.get(reverse("cards:company-person-create", args=[other_company.pk])).status_code, 404)
 
     def test_company_user_cannot_add_person_past_plan_limit(self):

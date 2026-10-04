@@ -5,7 +5,7 @@
   <a class="back-link" href="{% url 'cards:company-dashboard' company.pk %}">← Back to {{ company.name }}</a>
   <p class="eyebrow">NEW DIGITAL CARD</p>
   <h1>Add a person.</h1>
-  <p>Create a permanent digital business card and QR code for a member of your team.</p>
+  <p>Create a permanent digital business card and QR code for a member of your team. Website and social links can be entered with or without <strong>https://</strong>.</p>
 </section>
 <form method="post" enctype="multipart/form-data" class="edit-form person-form">
   {% csrf_token %}
