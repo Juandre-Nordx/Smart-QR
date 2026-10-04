@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block body_class %}landing{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">One identity. One scan.</p>
+  <h1>Your business card,<br>re-engineered.</h1>
+  <p class="hero-copy">Create digital business cards for your entire company. Share instantly, update centrally, and connect through a single QR code.</p>
+  <div class="hero-actions">
+    <a class="button" href="{% url 'cards:signup-start' %}">Get started <span aria-hidden="true">↗</span></a>
+    <a class="button button-outline" href="{% url 'login' %}">Login</a>
+  </div>
+  <div class="hero-visual" aria-hidden="true">
+    <div class="scan-lines"></div>
+    <div class="qr-frame"><span>QRD</span></div>
+    <p>READY TO CONNECT</p>
+  </div>
+</section>
+
+<section class="statement" id="product">
+  <p class="section-number">01 / PRODUCT</p>
+  <h2>Built for the way modern teams connect.</h2>
+  <div class="feature-grid">
+    <article><span>01</span><h3>Always current</h3><p>Update details once. Every shared card and QR code stays current automatically.</p></article>
+    <article><span>02</span><h3>Instantly shareable</h3><p>One scan opens a polished, contact-ready profile on any modern device.</p></article>
+    <article><span>03</span><h3>Company controlled</h3><p>Keep every employee card consistent, accurate, and unmistakably yours.</p></article>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
+  <div>
+    <p class="section-number">02 / PRICING</p>
+    <h2>Simple by design.</h2>
+    <p>No hidden fees. Scale your workspace when your team grows.</p>
+  </div>
+  <article class="price-card">
+    <p class="eyebrow">COMPANY PLAN · MONTHLY</p>
+    <div class="price"><span>R</span>80<small>/ month</small></div>
+    <p class="plus">+ R10 per user / month</p>
+    <ul><li>Company workspace</li><li>Unlimited card updates</li><li>Permanent QR codes</li><li>Central team management</li></ul>
+    <a class="button button-light" href="{% url 'cards:signup-start' %}">Start building your team</a>
+  </article>
+</section>
+
+<section class="final-cta"><p class="eyebrow">MAKE THE CONNECTION</p><h2>Leave paper behind.</h2><a class="button button-light" href="{% url 'cards:signup-start' %}">Create your company</a></section>
+<footer><a class="wordmark" href="{% url 'home' %}">QRD</a><p>Digital identity for modern business.</p><p>© {% now "Y" %} QRD</p></footer>
+{% endblock %}

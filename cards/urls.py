@@ -2,9 +2,12 @@ from django.urls import path
 from . import views
 app_name = "cards"
 urlpatterns = [
+ path("signup/", views.signup, name="signup-start"), path("signup/<str:step>/", views.signup, name="signup"),
+ path("signup/success/<int:pk>/", views.signup_success, name="signup-success"),
  path("health/", views.health, name="health"), path("dashboard/", views.dashboard, name="dashboard"),
  path("dashboard/people/", views.people, name="people"), path("dashboard/companies/new/", views.company_create, name="company-create"),
  path("dashboard/companies/<int:pk>/", views.company_dashboard, name="company-dashboard"),
+ path("dashboard/companies/<int:pk>/people/new/", views.company_person_create, name="company-person-create"),
  path("dashboard/companies/<int:pk>/edit/", views.company_edit, name="company-edit"), path("dashboard/people/new/", views.person_create, name="person-create"),
  path("dashboard/people/<int:pk>/edit/", views.person_edit, name="person-edit"), path("dashboard/people/<int:pk>/toggle/", views.toggle_person, name="person-toggle"),
  path("c/<uuid:public_id>/", views.public_card, name="public-card"), path("c/<uuid:public_id>/contact.vcf", views.vcard, name="vcard"),
