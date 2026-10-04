@@ -145,6 +145,13 @@ class CardTests(TestCase):
         self.assertContains(response, f'src="{qr_url}"')
         self.assertContains(response, f"QR code to open {self.person.full_name}'s digital business card")
 
+    def test_public_card_has_share_action_and_landing_page_link(self):
+        response = self.client.get(self.person.get_absolute_url())
+        self.assertContains(response, "Share this card")
+        self.assertContains(response, f'data-share-url="{self.person.permanent_url()}"')
+        self.assertContains(response, f'href="{reverse("home")}">Need your own QRD?')
+        self.assertContains(response, "navigator.share")
+
     def test_unavailable_card_hides_account_navigation_from_logged_in_users(self):
         self.person.is_active = False
         self.person.save()
