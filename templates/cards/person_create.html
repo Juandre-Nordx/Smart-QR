@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Add person — {{ company.name }} — QRD{% endblock %}
+{% block content %}
+<section class="form-heading">
+  <a class="back-link" href="{% url 'cards:company-dashboard' company.pk %}">← Back to {{ company.name }}</a>
+  <p class="eyebrow">NEW DIGITAL CARD</p>
+  <h1>Add a person.</h1>
+  <p>Create a permanent digital business card and QR code for a member of your team. Website and social links can be entered with or without <strong>https://</strong>.</p>
+</section>
+<form method="post" enctype="multipart/form-data" class="edit-form person-form">
+  {% csrf_token %}
+  {% if at_capacity %}<div class="capacity-notice" role="alert"><strong>User limit reached.</strong><p>Your current plan includes {{ company.user_limit }} user{{ company.user_limit|pluralize }}. Contact QRD to add more users before creating another card.</p></div>{% endif %}
+  {{ form.non_field_errors }}
+  {% for field in form %}<label>{{ field.label }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{{ field.errors }}</label>{% endfor %}
+  <div class="form-actions"><a href="{% url 'cards:company-dashboard' company.pk %}">Cancel</a><button class="button"{% if at_capacity %} disabled{% endif %}>Create digital card →</button></div>
+</form>
+{% endblock %}
