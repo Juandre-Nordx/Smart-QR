@@ -27,10 +27,11 @@
         <div class="total"><span>Total per month</span><strong>R{{ monthly_total }}</strong></div>
       </div>
     {% endif %}
-    <form method="post" class="wizard-form" novalidate>
+    <form method="post" enctype="multipart/form-data" class="wizard-form" novalidate>
       {% csrf_token %}
       {% if form %}
         {% for field in form %}<div class="field{% if field.field.widget.input_type == 'checkbox' %} checkbox-field{% endif %}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}</div>{% endfor %}
+        {% if step == 'company' and signup_data.company.logo_name %}<p class="saved-upload">✓ Company logo uploaded. Choose another file only if you want to replace it.</p>{% endif %}
       {% endif %}
       {% if form.non_field_errors %}<div class="field-error">{{ form.non_field_errors }}</div>{% endif %}
       <div class="wizard-actions">

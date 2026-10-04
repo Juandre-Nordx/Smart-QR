@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from .models import Company, Person
+from .models import Company, Person, validate_image
 
 class FlexibleURLField(forms.URLField):
     """Accept normal web addresses without making users type the scheme."""
@@ -20,6 +20,13 @@ class FlexibleURLField(forms.URLField):
 class CompanySignupForm(forms.Form):
     company_name = forms.CharField(max_length=200, label="Company name")
     industry = forms.CharField(max_length=120, help_text="For example: Technology, legal, finance")
+    logo = forms.ImageField(required=False, validators=[validate_image], help_text="JPEG, PNG, or WebP. Maximum 5 MB.")
+    primary_color = forms.RegexField(r"^#[0-9A-Fa-f]{6}$", initial="#000000", widget=forms.TextInput(attrs={"type": "color"}))
+    secondary_color = forms.RegexField(r"^#[0-9A-Fa-f]{6}$", initial="#ffffff", widget=forms.TextInput(attrs={"type": "color"}))
+    slogan = forms.CharField(max_length=240, required=False, label="Slogan / tagline")
+    phone = forms.CharField(max_length=50, required=False, label="Primary phone")
+    email = forms.EmailField(label="Primary email")
+    website = FlexibleURLField(label="Website")
 
 class AdminSignupForm(forms.Form):
     full_name = forms.CharField(max_length=200, label="Your name")

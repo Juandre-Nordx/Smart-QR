@@ -143,7 +143,19 @@ class CardTests(TestCase):
         self.assertEqual(self.company.active_card_count, 1); self.assertEqual(self.company.monthly_total, Decimal("90.00"))
 
     def test_self_service_signup_creates_company_and_admin(self):
-        self.client.post(reverse("cards:signup", args=["company"]), {"company_name": "Nova Labs", "industry": "Technology"})
+        logo_data = io.BytesIO()
+        Image.new("RGB", (2, 2)).save(logo_data, "PNG")
+        self.client.post(reverse("cards:signup", args=["company"]), {
+            "company_name": "Nova Labs",
+            "industry": "Technology",
+            "logo": SimpleUploadedFile("nova.png", logo_data.getvalue(), content_type="image/png"),
+            "primary_color": "#111111",
+            "secondary_color": "#eeeeee",
+            "slogan": "Ideas in motion",
+            "phone": "+27 11 555 0100",
+            "email": "hello@nova.test",
+            "website": "nova.test",
+        })
         self.client.post(reverse("cards:signup", args=["admin"]), {"full_name": "Ada Lovelace", "email": "ada@nova.test", "password": "secure-password-123"})
         self.client.post(reverse("cards:signup", args=["users"]), {"user_count": 7})
         summary = self.client.get(reverse("cards:signup", args=["summary"]))
@@ -154,7 +166,20 @@ class CardTests(TestCase):
         self.assertRedirects(response, reverse("cards:signup-success", args=[company.pk]))
         self.assertEqual(company.industry, "Technology")
         self.assertEqual(company.user_limit, 7)
+        self.assertEqual(company.slogan, "Ideas in motion")
+        self.assertEqual(company.primary_color, "#111111")
+        self.assertEqual(company.secondary_color, "#eeeeee")
+        self.assertEqual(company.phone, "+27 11 555 0100")
+        self.assertEqual(company.email, "hello@nova.test")
+        self.assertEqual(company.website, "https://nova.test")
+        self.assertTrue(company.logo)
+        self.addCleanup(company.logo.storage.delete, company.logo.name)
         self.assertTrue(company.dashboard_users.filter(username="ada@nova.test").exists())
+
+        card = Person.objects.create(company=company, first_name="Grace", last_name="Hopper")
+        public_card = self.client.get(card.get_absolute_url())
+        self.assertContains(public_card, company.logo.url)
+        self.assertContains(public_card, "Ideas in motion")
     def test_image_validation(self):
         bad=SimpleUploadedFile("bad.gif", b"not an image", content_type="image/gif"); self.person.photo=bad
         with self.assertRaises(ValidationError): self.person.full_clean()

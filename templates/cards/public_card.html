@@ -1,1 +1,19 @@
-{% extends 'base.html' %}{% block title %}{{ person.full_name }}{% endblock %}{% block account_navigation %}{% endblock %}{% block content %}<article class="card" style="--brand:{{ person.company.primary_color }}">{% if person.company.logo %}<img class="logo" src="{{ person.company.logo.url }}" alt="Company logo">{% endif %}{% if person.photo %}<img class="photo" src="{{ person.photo.url }}" alt="{{ person.full_name }}">{% endif %}<h1>{{ person.full_name }}</h1><p>{{ person.position }} · {{ person.company.name }}</p>{% if person.biography %}<p>{{ person.biography|linebreaksbr }}</p>{% endif %}<a class="button contact" href="{% url 'cards:vcard' person.public_id %}">Add to Contacts</a><div class="actions">{% if person.mobile_phone %}<a href="tel:{{ person.mobile_phone }}">Call</a>{% endif %}{% if person.whatsapp_number %}<a href="https://wa.me/{{ person.whatsapp_number|cut:'+' }}">WhatsApp</a>{% endif %}{% if person.email %}<a href="mailto:{{ person.email }}">Email</a>{% endif %}{% if person.website %}<a href="{{ person.website }}">Website</a>{% endif %}{% if person.address %}<a href="https://maps.google.com/?q={{ person.address|urlencode }}">Directions</a>{% endif %}{% if person.linkedin_url %}<a href="{{ person.linkedin_url }}">LinkedIn</a>{% endif %}{% if person.facebook_url %}<a href="{{ person.facebook_url }}">Facebook</a>{% endif %}{% if person.instagram_url %}<a href="{{ person.instagram_url }}">Instagram</a>{% endif %}{% if person.x_url %}<a href="{{ person.x_url }}">X</a>{% endif %}{% if person.youtube_url %}<a href="{{ person.youtube_url }}">YouTube</a>{% endif %}{% if person.tiktok_url %}<a href="{{ person.tiktok_url }}">TikTok</a>{% endif %}</div></article>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{ person.full_name }}{% endblock %}
+{% block account_navigation %}{% endblock %}
+{% block content %}
+<article class="card" style="--brand:{{ person.company.primary_color }};--brand-secondary:{{ person.company.secondary_color }}">
+  <header class="card-brand">
+    {% if person.company.logo %}<img class="logo" src="{{ person.company.logo.url }}" alt="{{ person.company.name }} logo">{% endif %}
+    {% if person.company.slogan %}<p class="company-slogan">{{ person.company.slogan }}</p>{% endif %}
+  </header>
+  {% if person.photo %}<img class="photo" src="{{ person.photo.url }}" alt="{{ person.full_name }}">{% endif %}
+  <h1>{{ person.full_name }}</h1>
+  <p>{{ person.position }} · {{ person.company.name }}</p>
+  {% if person.biography %}<p>{{ person.biography|linebreaksbr }}</p>{% endif %}
+  <a class="button contact" href="{% url 'cards:vcard' person.public_id %}">Add to Contacts</a>
+  <div class="actions">
+    {% if person.mobile_phone %}<a href="tel:{{ person.mobile_phone }}">Call</a>{% endif %}{% if person.whatsapp_number %}<a href="https://wa.me/{{ person.whatsapp_number|cut:'+' }}">WhatsApp</a>{% endif %}{% if person.email %}<a href="mailto:{{ person.email }}">Email</a>{% endif %}{% if person.website %}<a href="{{ person.website }}">Website</a>{% endif %}{% if person.address %}<a href="https://maps.google.com/?q={{ person.address|urlencode }}">Directions</a>{% endif %}{% if person.linkedin_url %}<a href="{{ person.linkedin_url }}">LinkedIn</a>{% endif %}{% if person.facebook_url %}<a href="{{ person.facebook_url }}">Facebook</a>{% endif %}{% if person.instagram_url %}<a href="{{ person.instagram_url }}">Instagram</a>{% endif %}{% if person.x_url %}<a href="{{ person.x_url }}">X</a>{% endif %}{% if person.youtube_url %}<a href="{{ person.youtube_url }}">YouTube</a>{% endif %}{% if person.tiktok_url %}<a href="{{ person.tiktok_url }}">TikTok</a>{% endif %}
+  </div>
+</article>
+{% endblock %}

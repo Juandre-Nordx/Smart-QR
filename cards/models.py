@@ -20,6 +20,7 @@ def validate_image(value):
 class Company(models.Model):
     name = models.CharField(max_length=200)
     industry = models.CharField(max_length=120, blank=True)
+    slogan = models.CharField(max_length=240, blank=True)
     user_limit = models.PositiveIntegerField(default=1)
     dashboard_users = models.ManyToManyField(
         settings.AUTH_USER_MODEL,

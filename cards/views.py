@@ -1,4 +1,6 @@
 import io
+import uuid
+from pathlib import Path
 import qrcode
 import qrcode.image.svg
 from django.contrib import messages
@@ -6,6 +8,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model, login
 from django.db import transaction
+from django.core.files.storage import default_storage
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -34,10 +37,22 @@ def signup(request, step="company"):
     if step_index and not all(name in signup_data for name in step_names[:step_index] if name != "summary"):
         return redirect("cards:signup", step="company")
     form_class = SIGNUP_STEPS[step_index][1]
-    form = form_class(request.POST or None, initial=signup_data.get(step)) if form_class else None
+    form = form_class(request.POST or None, request.FILES or None, initial=signup_data.get(step)) if form_class else None
     if request.method == "POST":
         if form and form.is_valid():
-            signup_data[step] = form.cleaned_data
+            cleaned_data = form.cleaned_data.copy()
+            if step == "company":
+                logo = cleaned_data.pop("logo", None)
+                previous_logo = signup_data.get("company", {}).get("logo_name", "")
+                if logo:
+                    suffix = Path(logo.name).suffix.lower()
+                    logo_name = default_storage.save(f"companies/logos/{uuid.uuid4().hex}{suffix}", logo)
+                    if previous_logo:
+                        default_storage.delete(previous_logo)
+                    cleaned_data["logo_name"] = logo_name
+                else:
+                    cleaned_data["logo_name"] = previous_logo
+            signup_data[step] = cleaned_data
             request.session["signup_data"] = signup_data
             if step == "payment":
                 with transaction.atomic():
@@ -51,6 +66,13 @@ def signup(request, step="company"):
                     company = Company.objects.create(
                         name=signup_data["company"]["company_name"],
                         industry=signup_data["company"]["industry"],
+                        slogan=signup_data["company"]["slogan"],
+                        logo=signup_data["company"]["logo_name"],
+                        primary_color=signup_data["company"]["primary_color"],
+                        secondary_color=signup_data["company"]["secondary_color"],
+                        phone=signup_data["company"]["phone"],
+                        email=signup_data["company"]["email"],
+                        website=signup_data["company"]["website"],
                         billing_email=admin["email"],
                         billing_contact_name=admin["full_name"],
                         user_limit=signup_data["users"]["user_count"],
