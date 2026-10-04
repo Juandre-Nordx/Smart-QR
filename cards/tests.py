@@ -106,6 +106,14 @@ class CardTests(TestCase):
         self.assertContains(response, "Your business card")
         self.assertContains(response, '<div class="price"><span>R</span>80', html=False)
 
+    def test_pages_include_browser_icon(self):
+        response = self.client.get(reverse("home"))
+        self.assertContains(
+            response,
+            '<link rel="icon" href="/static/cards/favicon.svg" type="image/svg+xml">',
+            html=True,
+        )
+
     def test_company_signup_has_color_controls_and_live_preview(self):
         response = self.client.get(reverse("cards:signup", args=["company"]))
         self.assertContains(response, 'type="color"', count=2)
