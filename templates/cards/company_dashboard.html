@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ company.name }} | Smart QR{% endblock %}
+{% block title %}{{ company.name }} — QRD{% endblock %}
 {% block content %}
 <section class="company-header" style="--brand: {{ company.primary_color }}">
   <div class="company-identity">
@@ -7,7 +7,7 @@
     <div>
       <a class="back-link" href="{% url 'cards:dashboard' %}">← {% if user.is_staff %}All companies{% else %}My companies{% endif %}</a>
       <h1>{{ company.name }}</h1>
-      <p>{{ company.people.count }} card{{ company.people.count|pluralize }} · {{ company.active_card_count }} active</p>
+      <p>{{ company.industry|default:"Company workspace" }} · {{ company.people.count }} card{{ company.people.count|pluralize }} · {{ company.active_card_count }} active</p>
     </div>
   </div>
   {% if user.is_staff %}<a class="button" href="{% url 'cards:person-create' %}">Add person</a>{% endif %}
@@ -50,7 +50,7 @@
 {% endblock %}
 {% block scripts %}<script>
 document.querySelectorAll('.share-link').forEach((button) => button.addEventListener('click', async () => {
-  const shareData = {title: `${button.dataset.shareName} | Smart QR`, url: button.dataset.shareUrl};
+  const shareData = {title: `${button.dataset.shareName} | QRD`, url: button.dataset.shareUrl};
   if (navigator.share) { await navigator.share(shareData); return; }
   await navigator.clipboard.writeText(shareData.url);
   const original = button.textContent; button.textContent = 'Link copied';

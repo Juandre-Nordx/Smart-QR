@@ -19,6 +19,8 @@ def validate_image(value):
 
 class Company(models.Model):
     name = models.CharField(max_length=200)
+    industry = models.CharField(max_length=120, blank=True)
+    user_limit = models.PositiveIntegerField(default=1)
     dashboard_users = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         blank=True,
@@ -34,7 +36,7 @@ class Company(models.Model):
     email = models.EmailField(blank=True); phone = models.CharField(max_length=50, blank=True)
     website = models.URLField(blank=True); address = models.TextField(blank=True)
     logo = models.ImageField(upload_to="companies/logos/", blank=True, validators=[validate_image])
-    primary_color = models.CharField(max_length=7, default="#17324d")
+    primary_color = models.CharField(max_length=7, default="#000000")
     secondary_color = models.CharField(max_length=7, default="#ffffff")
     created_at = models.DateTimeField(auto_now_add=True); updated_at = models.DateTimeField(auto_now=True)
     class Meta: ordering = ["name"]
@@ -42,7 +44,7 @@ class Company(models.Model):
     @property
     def active_card_count(self): return self.people.filter(is_active=True).count()
     @property
-    def monthly_total(self): return Decimal("80.00") * self.active_card_count
+    def monthly_total(self): return Decimal("80.00") + (Decimal("10.00") * self.user_limit)
 
 class Person(models.Model):
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True)
