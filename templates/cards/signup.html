@@ -30,8 +30,9 @@
     <form method="post" enctype="multipart/form-data" class="wizard-form" novalidate>
       {% csrf_token %}
       {% if form %}
-        {% for field in form %}<div class="field{% if field.field.widget.input_type == 'checkbox' %} checkbox-field{% endif %}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}</div>{% endfor %}
+        {% for field in form %}<div class="field{% if field.field.widget.input_type == 'checkbox' %} checkbox-field{% elif field.field.widget.input_type == 'color' %} color-field{% endif %}">{{ field.label_tag }}{% if field.field.widget.input_type == 'color' %}<div class="color-control">{{ field }}<output for="{{ field.id_for_label }}" data-color-output>{{ field.value|default:field.field.initial }}</output></div>{% else %}{{ field }}{% endif %}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}</div>{% endfor %}
         {% if step == 'company' and signup_data.company.logo_name %}<p class="saved-upload">✓ Company logo uploaded. Choose another file only if you want to replace it.</p>{% endif %}
+        {% if step == 'company' %}<div class="brand-preview" aria-label="Company card color preview"><span>LIVE PREVIEW</span><strong data-preview-name>Your company</strong><small data-preview-slogan>Your slogan</small><i>QRD DIGITAL CARD</i></div>{% endif %}
       {% endif %}
       {% if form.non_field_errors %}<div class="field-error">{{ form.non_field_errors }}</div>{% endif %}
       <div class="wizard-actions">
@@ -42,3 +43,21 @@
   </section>
 </div>
 {% endblock %}
+{% block scripts %}{% if step == 'company' %}<script>
+const primary = document.querySelector('#id_primary_color');
+const secondary = document.querySelector('#id_secondary_color');
+const preview = document.querySelector('.brand-preview');
+const companyName = document.querySelector('#id_company_name');
+const slogan = document.querySelector('#id_slogan');
+const refreshBrandPreview = () => {
+  preview.style.setProperty('--preview-primary', primary.value);
+  preview.style.setProperty('--preview-secondary', secondary.value);
+  document.querySelectorAll('[data-color-output]').forEach((output) => {
+    output.value = document.querySelector(`#${output.getAttribute('for')}`).value.toUpperCase();
+  });
+  preview.querySelector('[data-preview-name]').textContent = companyName.value || 'Your company';
+  preview.querySelector('[data-preview-slogan]').textContent = slogan.value || 'Your slogan';
+};
+[primary, secondary, companyName, slogan].forEach((input) => input.addEventListener('input', refreshBrandPreview));
+refreshBrandPreview();
+</script>{% endif %}{% endblock %}

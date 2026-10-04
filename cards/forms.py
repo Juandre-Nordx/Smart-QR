@@ -21,8 +21,16 @@ class CompanySignupForm(forms.Form):
     company_name = forms.CharField(max_length=200, label="Company name")
     industry = forms.CharField(max_length=120, help_text="For example: Technology, legal, finance")
     logo = forms.ImageField(required=False, validators=[validate_image], help_text="JPEG, PNG, or WebP. Maximum 5 MB.")
-    primary_color = forms.RegexField(r"^#[0-9A-Fa-f]{6}$", initial="#000000", widget=forms.TextInput(attrs={"type": "color"}))
-    secondary_color = forms.RegexField(r"^#[0-9A-Fa-f]{6}$", initial="#ffffff", widget=forms.TextInput(attrs={"type": "color"}))
+    primary_color = forms.RegexField(
+        r"^#[0-9A-Fa-f]{6}$",
+        initial="#000000",
+        widget=forms.TextInput(attrs={"type": "color", "class": "color-picker"}),
+    )
+    secondary_color = forms.RegexField(
+        r"^#[0-9A-Fa-f]{6}$",
+        initial="#ffffff",
+        widget=forms.TextInput(attrs={"type": "color", "class": "color-picker"}),
+    )
     slogan = forms.CharField(max_length=240, required=False, label="Slogan / tagline")
     phone = forms.CharField(max_length=50, required=False, label="Primary phone")
     email = forms.EmailField(label="Primary email")

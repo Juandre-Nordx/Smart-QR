@@ -105,6 +105,12 @@ class CardTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Your business card")
         self.assertContains(response, '<div class="price"><span>R</span>80', html=False)
+
+    def test_company_signup_has_color_controls_and_live_preview(self):
+        response = self.client.get(reverse("cards:signup", args=["company"]))
+        self.assertContains(response, 'type="color"', count=2)
+        self.assertContains(response, "LIVE PREVIEW")
+        self.assertContains(response, "refreshBrandPreview")
     def test_public_card_hides_account_navigation_from_logged_in_users(self):
         self.client.login(username="staff", password="test-pass")
         response = self.client.get(self.person.get_absolute_url())
