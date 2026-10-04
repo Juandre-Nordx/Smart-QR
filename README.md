@@ -18,7 +18,17 @@ python manage.py seed_sample
 python manage.py runserver
 ```
 
-The superuser is the development dashboard login at `/admin/login/`; no default password or real customer data is supplied. Run tests with `python manage.py test` and checks with `python manage.py check`.
+The superuser is the development administrator; no default password or real customer data is supplied. Administrators sign in at `/admin/`, while company users sign in at `/accounts/login/`. Run tests with `python manage.py test` and checks with `python manage.py check`.
+
+## Company dashboard access
+
+Each company can have one or more private dashboard users. To give a customer
+access, sign in to `/admin/`, create a non-staff user under **Authentication and
+Authorization > Users**, then open the company and add that user under
+**Dashboard users**. The customer can then sign in at `/accounts/login/` and can
+only open the dashboards assigned to their account. Company users can view and
+share active employee card links or download their QR codes, but cannot edit
+companies, people, billing details, or cards. Staff users retain full access.
 
 ## Environment
 
@@ -195,12 +205,15 @@ https://smart-qr-production.up.railway.app/
 ```
 
 Use `https://` and do not add an internal port to the public URL. The home URL
-redirects to the staff dashboard and then to the administrator login when you
-are signed out. You can also open the login directly at:
+redirects to the dashboard and then to the company login when you are signed
+out. You can also open the customer login directly at:
 
 ```text
-https://smart-qr-production.up.railway.app/admin/login/
+https://smart-qr-production.up.railway.app/accounts/login/
 ```
+
+Administrators can continue to sign in at `/admin/` to create users and assign
+their company access.
 
 To confirm the deployment is alive without logging in, visit:
 

@@ -6,6 +6,7 @@ from django.conf import settings
 urlpatterns = [
     path("", RedirectView.as_view(pattern_name="cards:dashboard", permanent=False), name="home"),
     path("admin/", admin.site.urls),
+    path("accounts/", include("django.contrib.auth.urls")),
     path("", include("cards.urls")),
 ]
 if settings.SERVE_MEDIA:

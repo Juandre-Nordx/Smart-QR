@@ -25,7 +25,7 @@ MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", DEFAULT_MEDIA_ROOT))
 USE_OBJECT_STORAGE = not DEBUG and bool(os.getenv("AWS_STORAGE_BUCKET_NAME"))
 SERVE_MEDIA = os.getenv("SERVE_MEDIA", str(not USE_OBJECT_STORAGE)).lower() in {"1", "true", "yes"}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-LOGIN_URL = "/admin/login/"; LOGIN_REDIRECT_URL = "/dashboard/"
+LOGIN_URL = "login"; LOGIN_REDIRECT_URL = "/dashboard/"; LOGOUT_REDIRECT_URL = "login"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = os.getenv("SECURE_COOKIES", str(not DEBUG)).lower() in {"1", "true", "yes"}
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
