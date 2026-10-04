@@ -75,6 +75,22 @@ class CardTests(TestCase):
 
     def test_home_redirects_to_dashboard(self):
         self.assertRedirects(self.client.get(reverse("home")), reverse("cards:dashboard"), fetch_redirect_response=False)
+    def test_public_card_hides_account_navigation_from_logged_in_users(self):
+        self.client.login(username="staff", password="test-pass")
+        response = self.client.get(self.person.get_absolute_url())
+        self.assertNotContains(response, ">Companies<")
+        self.assertNotContains(response, ">People<")
+        self.assertNotContains(response, ">Log out<")
+
+    def test_unavailable_card_hides_account_navigation_from_logged_in_users(self):
+        self.person.is_active = False
+        self.person.save()
+        self.client.login(username="staff", password="test-pass")
+        response = self.client.get(self.person.get_absolute_url())
+        self.assertNotContains(response, ">Companies<", status_code=410)
+        self.assertNotContains(response, ">People<", status_code=410)
+        self.assertNotContains(response, ">Log out<", status_code=410)
+
     def test_url_stable_after_edit(self):
         url = self.person.permanent_url(); self.person.first_name="Changed"; self.person.save()
         self.assertEqual(url, self.person.permanent_url())
