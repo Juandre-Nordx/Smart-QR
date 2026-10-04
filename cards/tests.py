@@ -59,5 +59,16 @@ class CardTests(TestCase):
         bad=SimpleUploadedFile("bad.gif", b"not an image", content_type="image/gif"); self.person.photo=bad
         with self.assertRaises(ValidationError): self.person.full_clean()
         data=io.BytesIO(); Image.new("RGB",(2,2)).save(data,"PNG"); good=SimpleUploadedFile("ok.png",data.getvalue(),content_type="image/png"); self.person.photo=good; self.person.full_clean()
+    @override_settings(DEBUG=False, SERVE_MEDIA=True)
+    def test_uploaded_photo_is_served_in_production(self):
+        data = io.BytesIO()
+        Image.new("RGB", (2, 2)).save(data, "PNG")
+        self.person.photo = SimpleUploadedFile("profile.png", data.getvalue(), content_type="image/png")
+        self.person.save()
+        self.addCleanup(self.person.photo.storage.delete, self.person.photo.name)
+        response = self.client.get(self.person.photo.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b"".join(response.streaming_content), data.getvalue())
+
     def test_health(self):
         response=self.client.get(reverse("cards:health")); self.assertEqual(response.status_code,200); self.assertEqual(response.json(),{"status":"ok"})

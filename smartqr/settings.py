@@ -18,15 +18,19 @@ AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = "en-za"; TIME_ZONE = "Africa/Johannesburg"; USE_I18N = True; USE_TZ = True
 STATIC_URL = "/static/"; STATIC_ROOT = BASE_DIR / "staticfiles"; STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
-MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", BASE_DIR / "media"))
-SERVE_MEDIA = os.getenv("SERVE_MEDIA", str(DEBUG)).lower() in {"1", "true", "yes"}
+# Railway mounts persistent volumes before the application starts. Prefer that
+# mount automatically, while allowing MEDIA_ROOT to override either location.
+DEFAULT_MEDIA_ROOT = Path("/data/media") if Path("/data").is_dir() else BASE_DIR / "media"
+MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", DEFAULT_MEDIA_ROOT))
+USE_OBJECT_STORAGE = not DEBUG and bool(os.getenv("AWS_STORAGE_BUCKET_NAME"))
+SERVE_MEDIA = os.getenv("SERVE_MEDIA", str(not USE_OBJECT_STORAGE)).lower() in {"1", "true", "yes"}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "/admin/login/"; LOGIN_REDIRECT_URL = "/dashboard/"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = os.getenv("SECURE_COOKIES", str(not DEBUG)).lower() in {"1", "true", "yes"}
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
 SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "false").lower() in {"1", "true", "yes"}
-if not DEBUG and os.getenv("AWS_STORAGE_BUCKET_NAME"):
+if USE_OBJECT_STORAGE:
     STORAGES = {"default": {"BACKEND": "storages.backends.s3.S3Storage"}, "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}}
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
