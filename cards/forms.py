@@ -37,3 +37,10 @@ class PersonForm(forms.ModelForm):
     class Meta:
         model = Person
         exclude = ("public_id", "created_at", "updated_at")
+
+class CompanyPersonForm(forms.ModelForm):
+    """Card form for company admins; the company is assigned by the view."""
+
+    class Meta:
+        model = Person
+        exclude = ("company", "public_id", "is_active", "created_at", "updated_at")

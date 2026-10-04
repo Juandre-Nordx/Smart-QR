@@ -46,11 +46,34 @@ class CardTests(TestCase):
         company_dashboard = self.client.get(reverse("cards:company-dashboard", args=[self.company.pk]))
         self.assertContains(company_dashboard, self.person.full_name)
         self.assertContains(company_dashboard, "Share card")
+        self.assertContains(company_dashboard, reverse("cards:company-person-create", args=[self.company.pk]))
         self.assertContains(company_dashboard, self.person.permanent_url())
-        self.assertNotContains(company_dashboard, "Add person")
         self.assertNotContains(company_dashboard, reverse("cards:person-edit", args=[self.person.pk]))
         self.assertEqual(self.client.get(reverse("cards:company-dashboard", args=[other_company.pk])).status_code, 404)
         self.assertNotContains(company_dashboard, other_person.full_name)
+
+    def test_company_user_can_add_person_only_to_assigned_company(self):
+        self.company.user_limit = 2
+        self.company.save(update_fields=["user_limit"])
+        other_company = Company.objects.create(name="Private Other Co")
+        self.client.login(username="acme", password="company-pass")
+
+        add_url = reverse("cards:company-person-create", args=[self.company.pk])
+        response = self.client.post(add_url, {"first_name": "New", "last_name": "Teammate", "email": "new@example.test"})
+        person = Person.objects.get(first_name="New", last_name="Teammate")
+        self.assertRedirects(response, reverse("cards:company-dashboard", args=[self.company.pk]))
+        self.assertEqual(person.company, self.company)
+        self.assertTrue(person.is_active)
+        self.assertEqual(self.client.get(reverse("cards:company-person-create", args=[other_company.pk])).status_code, 404)
+
+    def test_company_user_cannot_add_person_past_plan_limit(self):
+        self.client.login(username="acme", password="company-pass")
+        response = self.client.post(
+            reverse("cards:company-person-create", args=[self.company.pk]),
+            {"first_name": "Over", "last_name": "Limit"},
+        )
+        self.assertContains(response, "User limit reached")
+        self.assertFalse(Person.objects.filter(first_name="Over", last_name="Limit").exists())
 
     def test_company_user_cannot_access_staff_management(self):
         self.client.login(username="acme", password="company-pass")

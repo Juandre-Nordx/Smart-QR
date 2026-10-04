@@ -9,7 +9,7 @@ from django.db import transaction
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
-from .forms import AdminSignupForm, CompanyForm, CompanySignupForm, PaymentConfirmationForm, PersonForm, SeatsSignupForm
+from .forms import AdminSignupForm, CompanyForm, CompanyPersonForm, CompanySignupForm, PaymentConfirmationForm, PersonForm, SeatsSignupForm
 from .models import Company, Person
 
 def health(request): return JsonResponse({"status": "ok"})
@@ -97,6 +97,25 @@ def company_dashboard(request, pk):
         companies = companies.filter(dashboard_users=request.user)
     company = get_object_or_404(companies, pk=pk)
     return render(request, "cards/company_dashboard.html", {"company": company})
+
+@login_required
+def company_person_create(request, pk):
+    companies = Company.objects.all()
+    if not request.user.is_staff:
+        companies = companies.filter(dashboard_users=request.user)
+    company = get_object_or_404(companies, pk=pk)
+    at_capacity = not request.user.is_staff and company.people.count() >= company.user_limit
+    form = CompanyPersonForm(request.POST or None, request.FILES or None)
+    if request.method == "POST":
+        if at_capacity:
+            form.add_error(None, "Your plan has reached its user limit. Contact QRD to add more users.")
+        elif form.is_valid():
+            person = form.save(commit=False)
+            person.company = company
+            person.save()
+            messages.success(request, f"{person.full_name}'s digital card is ready.")
+            return redirect("cards:company-dashboard", pk=company.pk)
+    return render(request, "cards/person_create.html", {"form": form, "company": company, "at_capacity": at_capacity})
 
 @staff_member_required
 def people(request): return render(request, "cards/person_list.html", {"people": Person.objects.select_related("company")})

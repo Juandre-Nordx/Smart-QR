@@ -10,7 +10,7 @@
       <p>{{ company.industry|default:"Company workspace" }} · {{ company.people.count }} card{{ company.people.count|pluralize }} · {{ company.active_card_count }} active</p>
     </div>
   </div>
-  {% if user.is_staff %}<a class="button" href="{% url 'cards:person-create' %}">Add person</a>{% endif %}
+  <a class="button" href="{% url 'cards:company-person-create' company.pk %}">Add person</a>
 </section>
 
 {% if company.people.all %}
@@ -45,7 +45,7 @@
   {% endfor %}
 </div>
 {% else %}
-<section class="empty"><h2>No cards yet</h2><p>{% if user.is_staff %}Add the first person for {{ company.name }} to create their digital card and QR code.{% else %}Your company administrator has not added any cards yet.{% endif %}</p>{% if user.is_staff %}<a class="button" href="{% url 'cards:person-create' %}">Add person</a>{% endif %}</section>
+<section class="empty"><h2>No cards yet</h2><p>Add the first person for {{ company.name }} to create their digital card and QR code.</p><a class="button" href="{% url 'cards:company-person-create' company.pk %}">Add person</a></section>
 {% endif %}
 {% endblock %}
 {% block scripts %}<script>
