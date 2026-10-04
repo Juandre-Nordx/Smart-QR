@@ -18,6 +18,21 @@ class CardTests(TestCase):
         self.assertEqual(self.client.get(reverse("cards:dashboard")).status_code, 302)
         self.client.login(username="staff", password="test-pass")
         self.assertEqual(self.client.get(reverse("cards:dashboard")).status_code, 200)
+    def test_company_dashboard_lists_only_company_people(self):
+        other_company = Company.objects.create(name="Other Co")
+        other_person = Person.objects.create(company=other_company, first_name="Not", last_name="Shown")
+        self.client.login(username="staff", password="test-pass")
+        response = self.client.get(reverse("cards:company-dashboard", args=[self.company.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.person.full_name)
+        self.assertContains(response, self.person.position or "Team member")
+        self.assertContains(response, reverse("cards:qr", args=[self.person.public_id, "svg"]))
+        self.assertNotContains(response, other_person.full_name)
+
+    def test_company_dashboard_requires_staff(self):
+        response = self.client.get(reverse("cards:company-dashboard", args=[self.company.pk]))
+        self.assertRedirects(response, f"{reverse('admin:login')}?next={reverse('cards:company-dashboard', args=[self.company.pk])}", fetch_redirect_response=False)
+
     def test_home_redirects_to_dashboard(self):
         self.assertRedirects(self.client.get(reverse("home")), reverse("cards:dashboard"), fetch_redirect_response=False)
     def test_url_stable_after_edit(self):
@@ -44,5 +59,16 @@ class CardTests(TestCase):
         bad=SimpleUploadedFile("bad.gif", b"not an image", content_type="image/gif"); self.person.photo=bad
         with self.assertRaises(ValidationError): self.person.full_clean()
         data=io.BytesIO(); Image.new("RGB",(2,2)).save(data,"PNG"); good=SimpleUploadedFile("ok.png",data.getvalue(),content_type="image/png"); self.person.photo=good; self.person.full_clean()
+    @override_settings(DEBUG=False, SERVE_MEDIA=True)
+    def test_uploaded_photo_is_served_in_production(self):
+        data = io.BytesIO()
+        Image.new("RGB", (2, 2)).save(data, "PNG")
+        self.person.photo = SimpleUploadedFile("profile.png", data.getvalue(), content_type="image/png")
+        self.person.save()
+        self.addCleanup(self.person.photo.storage.delete, self.person.photo.name)
+        response = self.client.get(self.person.photo.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b"".join(response.streaming_content), data.getvalue())
+
     def test_health(self):
         response=self.client.get(reverse("cards:health")); self.assertEqual(response.status_code,200); self.assertEqual(response.json(),{"status":"ok"})

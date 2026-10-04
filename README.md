@@ -32,8 +32,8 @@ The superuser is the development dashboard login at `/admin/login/`; no default 
 | `PUBLIC_BASE_URL` | Canonical HTTPS origin encoded into every QR |
 | `SECURE_COOKIES` | Secure session/CSRF cookies; defaults on outside debug |
 | `SECURE_SSL_REDIRECT` | Set `true` when the platform forwards HTTPS correctly |
-| `MEDIA_ROOT` | Persistent upload directory; use `/data/media` with the Railway volume below |
-| `SERVE_MEDIA` | Serve volume-backed uploads from Django; set `true` on Railway |
+| `MEDIA_ROOT` | Persistent upload directory; automatically uses `/data/media` when a Railway volume is mounted at `/data` |
+| `SERVE_MEDIA` | Serve volume-backed uploads from Django; defaults to `true` unless object storage is enabled |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Optional S3 credentials instead of a volume |
 | `AWS_STORAGE_BUCKET_NAME` | Enables object media storage when `DEBUG=false` |
 | `AWS_S3_ENDPOINT_URL` | S3-compatible endpoint (AWS, R2, Spaces, etc.) |
@@ -103,7 +103,9 @@ volume** to the Smart-QR service; do not reuse or move the PostgreSQL volume.
 /data
 ```
 
-3. Add these two Smart-QR service variables:
+3. The application automatically detects the `/data` mount and stores uploads
+   under `/data/media`. No media variables are required for this layout. You may
+   still set these explicit Smart-QR service variables if you prefer:
 
 ```text
 MEDIA_ROOT=/data/media
