@@ -86,8 +86,9 @@ python -c "import secrets; print(secrets.token_urlsafe(64))"
 
 `ALLOWED_HOSTS` contains hostnames only (no `https://` or path), while
 `CSRF_TRUSTED_ORIGINS` and `PUBLIC_BASE_URL` must include `https://`. For more
-than one hostname, separate values with commas. No `PORT` environment variable
-is needed; the application and Railway target port are both set to `8000` below.
+than one hostname, separate values with commas. Railway supplies the `PORT`
+environment variable to the application; the start command uses it automatically
+and falls back to `8000` for local use.
 
 ### 3. Attach the image volume
 
@@ -161,24 +162,27 @@ python manage.py collectstatic --noinput
 **Start Command** (in the Deploy section)
 
 ```bash
-python manage.py migrate --noinput && gunicorn smartqr.wsgi:application --bind 0.0.0.0:8000
+python manage.py migrate --noinput && gunicorn smartqr.wsgi:application --bind 0.0.0.0:${PORT:-8000}
 ```
 
 Do not put the start command in the build-command field. The build command
 collects CSS and other static assets into the application image. The start
 command runs database migrations against the attached PostgreSQL service and
-then starts the web server on internal port **8000**.
+then starts the web server on the internal port supplied by Railway as `PORT`.
 
 1. Open **Smart-QR > Settings > Networking**, click **Generate Domain**, and copy
-   the HTTPS hostname. If Railway asks for a **target port** or **internal port**,
-   enter `8000`. Do not enter `80` or `443`; Railway handles public HTTP and
-   HTTPS and forwards that traffic to the app on port 8000.
+   the HTTPS hostname. Railway should detect the port on which Gunicorn starts.
+   If a domain already has a manually configured **target port**, it must match
+   the `PORT` value shown in the deployment (for example, `8080`). Do not enter
+   `80` or `443`; Railway handles public HTTP and HTTPS and forwards that traffic
+   to the application's internal port.
 2. Put that exact hostname into the three URL/host variables in step 2. Railway
    will redeploy when variables change.
 3. Confirm the latest deployment says it loaded `railway.json`. The health check
    is `/health/`.
 4. Watch the deployment logs. A successful deployment ends with Gunicorn
-   listening at `0.0.0.0:8000`, and the service changes to **Online**.
+   listening at `0.0.0.0:<PORT>` (for example, `0.0.0.0:8080`), and the service
+   changes to **Online**.
 
 ### Open the site
 
@@ -188,10 +192,9 @@ For the domain shown in the Railway networking screen, open:
 https://smart-qr-production.up.railway.app/
 ```
 
-Use `https://` and do not add `:8000` to the public URL. Port `8000` is only the
-private target between Railway's proxy and Gunicorn. The home URL redirects to
-the staff dashboard and then to the administrator login when you are signed
-out. You can also open the login directly at:
+Use `https://` and do not add an internal port to the public URL. The home URL
+redirects to the staff dashboard and then to the administrator login when you
+are signed out. You can also open the login directly at:
 
 ```text
 https://smart-qr-production.up.railway.app/admin/login/
@@ -204,8 +207,8 @@ https://smart-qr-production.up.railway.app/health/
 ```
 
 It should return `{"status": "ok"}`. If the domain displays an application
-error, first confirm the deployment is **Online**, the networking target is
-`8000`, and `ALLOWED_HOSTS` is exactly
+error, first confirm the deployment is **Online**, Gunicorn's logged listening
+port matches the domain's networking target, and `ALLOWED_HOSTS` is exactly
 `smart-qr-production.up.railway.app` (without `https://`).
 
 For a custom domain, add it under **Settings > Networking > Custom Domain**, add
