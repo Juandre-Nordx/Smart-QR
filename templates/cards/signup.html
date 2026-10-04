@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Create your workspace — QRD{% endblock %}
+{% block body_class %}flow-page{% endblock %}
+{% block content %}
+<div class="flow-shell">
+  <aside class="flow-aside">
+    <p class="eyebrow">CREATE YOUR WORKSPACE</p>
+    <h1>Start building your digital identity.</h1>
+    <p>Five clear steps. Your QRD company workspace will be ready in minutes.</p>
+    <div class="price-note"><span>MONTHLY FROM</span><strong>R80</strong><small>+ R10 / user</small></div>
+  </aside>
+  <section class="wizard-card">
+    <div class="progress" aria-label="Signup progress">
+      {% for item in steps %}<span class="{% if forloop.counter < step_index %}done{% elif forloop.counter == step_index %}active{% endif %}"><i>{{ forloop.counter }}</i><b>{{ item.2 }}</b></span>{% endfor %}
+    </div>
+    <p class="step-label">STEP {{ step_index }} OF 5</p>
+    {% if step == 'company' %}<h2>Tell us about your company.</h2><p class="form-intro">This creates the home for your team's digital cards.</p>
+    {% elif step == 'admin' %}<h2>Create your admin account.</h2><p class="form-intro">You'll use these details to securely manage your workspace.</p>
+    {% elif step == 'users' %}<h2>How large is your team?</h2><p class="form-intro">Choose how many digital cards you need. You can change this later.</p>
+    {% elif step == 'summary' %}<h2>Review your plan.</h2><p class="form-intro">Clear, predictable monthly pricing with no hidden fees.</p>
+    {% else %}<h2>Payment & confirmation.</h2><p class="form-intro">Confirm your monthly subscription. Your first invoice will be sent to the admin email after setup.</p>{% endif %}
+
+    {% if step == 'summary' or step == 'payment' %}
+      <div class="order-summary">
+        <div><span>Company workspace</span><strong>R80</strong></div>
+        <div><span>{{ user_count }} user{{ user_count|pluralize }} × R10</span><strong>R{% widthratio user_count 1 10 %}</strong></div>
+        <div class="total"><span>Total per month</span><strong>R{{ monthly_total }}</strong></div>
+      </div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data" class="wizard-form" novalidate>
+      {% csrf_token %}
+      {% if form %}
+        {% for field in form %}<div class="field{% if field.field.widget.input_type == 'checkbox' %} checkbox-field{% elif field.field.widget.input_type == 'color' %} color-field{% endif %}">{{ field.label_tag }}{% if field.field.widget.input_type == 'color' %}<div class="color-control">{{ field }}<output for="{{ field.id_for_label }}" data-color-output>{{ field.value|default:field.field.initial }}</output></div>{% else %}{{ field }}{% endif %}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}</div>{% endfor %}
+        {% if step == 'company' and signup_data.company.logo_name %}<p class="saved-upload">✓ Company logo uploaded. Choose another file only if you want to replace it.</p>{% endif %}
+        {% if step == 'company' %}<div class="brand-preview" aria-label="Company card color preview"><span>LIVE PREVIEW</span><strong data-preview-name>Your company</strong><small data-preview-slogan>Your slogan</small><i>QRD DIGITAL CARD</i></div>{% endif %}
+      {% endif %}
+      {% if form.non_field_errors %}<div class="field-error">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="wizard-actions">
+        {% if step_index > 1 %}<a href="{% if step == 'admin' %}{% url 'cards:signup' 'company' %}{% elif step == 'users' %}{% url 'cards:signup' 'admin' %}{% elif step == 'summary' %}{% url 'cards:signup' 'users' %}{% else %}{% url 'cards:signup' 'summary' %}{% endif %}">← Back</a>{% endif %}
+        <button type="submit">{% if step == 'payment' %}Create workspace{% elif step == 'summary' %}Continue to confirmation{% else %}Continue →{% endif %}</button>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}{% if step == 'company' %}<script>
+const primary = document.querySelector('#id_primary_color');
+const secondary = document.querySelector('#id_secondary_color');
+const preview = document.querySelector('.brand-preview');
+const companyName = document.querySelector('#id_company_name');
+const slogan = document.querySelector('#id_slogan');
+const refreshBrandPreview = () => {
+  preview.style.setProperty('--preview-primary', primary.value);
+  preview.style.setProperty('--preview-secondary', secondary.value);
+  document.querySelectorAll('[data-color-output]').forEach((output) => {
+    output.value = document.querySelector(`#${output.getAttribute('for')}`).value.toUpperCase();
+  });
+  preview.querySelector('[data-preview-name]').textContent = companyName.value || 'Your company';
+  preview.querySelector('[data-preview-slogan]').textContent = slogan.value || 'Your slogan';
+};
+[primary, secondary, companyName, slogan].forEach((input) => input.addEventListener('input', refreshBrandPreview));
+refreshBrandPreview();
+</script>{% endif %}{% endblock %}
