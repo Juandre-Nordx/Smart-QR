@@ -106,6 +106,14 @@ class CardTests(TestCase):
         self.assertContains(response, "Your business card")
         self.assertContains(response, '<div class="price"><span>R</span>80', html=False)
 
+    def test_pages_include_browser_icon(self):
+        response = self.client.get(reverse("home"))
+        self.assertContains(
+            response,
+            '<link rel="icon" href="/static/cards/favicon.svg" type="image/svg+xml">',
+            html=True,
+        )
+
     def test_company_signup_has_color_controls_and_live_preview(self):
         response = self.client.get(reverse("cards:signup", args=["company"]))
         self.assertContains(response, 'type="color"', count=2)
@@ -129,6 +137,13 @@ class CardTests(TestCase):
         self.assertContains(response, "Send a message")
         self.assertContains(response, "Visit online")
         self.assertContains(response, "Directions")
+
+    def test_public_card_displays_scannable_share_code(self):
+        response = self.client.get(self.person.get_absolute_url())
+        qr_url = reverse("cards:qr", args=[self.person.public_id, "svg"])
+        self.assertContains(response, "SHARE THIS CARD")
+        self.assertContains(response, f'src="{qr_url}"')
+        self.assertContains(response, f"QR code to open {self.person.full_name}'s digital business card")
 
     def test_unavailable_card_hides_account_navigation_from_logged_in_users(self):
         self.person.is_active = False
