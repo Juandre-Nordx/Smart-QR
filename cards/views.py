@@ -16,6 +16,11 @@ def dashboard(request):
     return render(request, "cards/dashboard.html", {"companies": companies})
 
 @staff_member_required
+def company_dashboard(request, pk):
+    company = get_object_or_404(Company.objects.prefetch_related("people"), pk=pk)
+    return render(request, "cards/company_dashboard.html", {"company": company})
+
+@staff_member_required
 def people(request): return render(request, "cards/person_list.html", {"people": Person.objects.select_related("company")})
 
 def _edit(request, form_class, template, instance=None):

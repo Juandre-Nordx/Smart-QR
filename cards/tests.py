@@ -18,6 +18,21 @@ class CardTests(TestCase):
         self.assertEqual(self.client.get(reverse("cards:dashboard")).status_code, 302)
         self.client.login(username="staff", password="test-pass")
         self.assertEqual(self.client.get(reverse("cards:dashboard")).status_code, 200)
+    def test_company_dashboard_lists_only_company_people(self):
+        other_company = Company.objects.create(name="Other Co")
+        other_person = Person.objects.create(company=other_company, first_name="Not", last_name="Shown")
+        self.client.login(username="staff", password="test-pass")
+        response = self.client.get(reverse("cards:company-dashboard", args=[self.company.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.person.full_name)
+        self.assertContains(response, self.person.position or "Team member")
+        self.assertContains(response, reverse("cards:qr", args=[self.person.public_id, "svg"]))
+        self.assertNotContains(response, other_person.full_name)
+
+    def test_company_dashboard_requires_staff(self):
+        response = self.client.get(reverse("cards:company-dashboard", args=[self.company.pk]))
+        self.assertRedirects(response, f"{reverse('admin:login')}?next={reverse('cards:company-dashboard', args=[self.company.pk])}", fetch_redirect_response=False)
+
     def test_home_redirects_to_dashboard(self):
         self.assertRedirects(self.client.get(reverse("home")), reverse("cards:dashboard"), fetch_redirect_response=False)
     def test_url_stable_after_edit(self):

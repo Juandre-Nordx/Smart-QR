@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}{{ company.name }} | Smart QR{% endblock %}
+{% block content %}
+<section class="company-header" style="--brand: {{ company.primary_color }}">
+  <div class="company-identity">
+    {% if company.logo %}<img class="company-logo" src="{{ company.logo.url }}" alt="{{ company.name }} logo">{% endif %}
+    <div>
+      <a class="back-link" href="{% url 'cards:dashboard' %}">← All companies</a>
+      <h1>{{ company.name }}</h1>
+      <p>{{ company.people.count }} card{{ company.people.count|pluralize }} · {{ company.active_card_count }} active</p>
+    </div>
+  </div>
+  <a class="button" href="{% url 'cards:person-create' %}">Add person</a>
+</section>
+
+{% if company.people.all %}
+<div class="people-grid">
+  {% for person in company.people.all %}
+  <article class="person-tile{% if not person.is_active %} is-inactive{% endif %}">
+    <div class="person-summary">
+      {% if person.photo %}
+        <img class="tile-photo" src="{{ person.photo.url }}" alt="Photo of {{ person.full_name }}">
+      {% else %}
+        <div class="tile-photo photo-placeholder" aria-hidden="true">{{ person.first_name|first }}{{ person.last_name|first }}</div>
+      {% endif %}
+      <div class="person-details">
+        <h2>{{ person.full_name }}</h2>
+        <p class="person-title">{{ person.position|default:"Team member" }}</p>
+        <span class="status-badge{% if not person.is_active %} inactive{% endif %}">{% if person.is_active %}Active{% else %}Inactive{% endif %}</span>
+      </div>
+    </div>
+    <div class="tile-qr">
+      {% if person.is_active %}
+        <img src="{% url 'cards:qr' person.public_id 'svg' %}" alt="QR code for {{ person.full_name }}'s card">
+        <span>Scan to view card</span>
+      {% else %}
+        <div class="qr-unavailable">QR unavailable</div>
+      {% endif %}
+    </div>
+    <div class="tile-actions">
+      <a href="{% url 'cards:person-edit' person.pk %}">Edit</a>
+      {% if person.is_active %}<a href="{{ person.get_absolute_url }}">View card</a><a href="{% url 'cards:qr' person.public_id 'png' %}">Download QR</a>{% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="empty"><h2>No cards yet</h2><p>Add the first person for {{ company.name }} to create their digital card and QR code.</p><a class="button" href="{% url 'cards:person-create' %}">Add person</a></section>
+{% endif %}
+{% endblock %}
