@@ -118,6 +118,18 @@ class CardTests(TestCase):
         self.assertNotContains(response, ">People<")
         self.assertNotContains(response, ">Log out<")
 
+    def test_public_card_uses_rich_contact_actions(self):
+        self.person.whatsapp_number = "+27123456789"
+        self.person.website = "https://example.test"
+        self.person.address = "1 Example Road"
+        self.person.save()
+        response = self.client.get(self.person.get_absolute_url())
+        self.assertContains(response, 'class="contact-actions"')
+        self.assertContains(response, f'href="tel:{self.person.mobile_phone}"')
+        self.assertContains(response, "Send a message")
+        self.assertContains(response, "Visit online")
+        self.assertContains(response, "Directions")
+
     def test_unavailable_card_hides_account_navigation_from_logged_in_users(self):
         self.person.is_active = False
         self.person.save()
