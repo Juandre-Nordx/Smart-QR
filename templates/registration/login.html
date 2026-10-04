@@ -1,14 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Company login | Smart QR{% endblock %}
+{% block title %}Login — QRD{% endblock %}
+{% block body_class %}flow-page{% endblock %}
 {% block content %}
 <section class="login-panel">
-  <h1>Company dashboard</h1>
-  <p>Sign in to view and share your company’s employee cards.</p>
+  <p class="eyebrow">WELCOME BACK</p>
+  <h1>Login to QRD.</h1>
+  <p>Access your company workspace and manage your team's digital identity.</p>
   <form method="post" class="edit-form">
     {% csrf_token %}
     {{ form.as_p }}
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-    <button type="submit">Sign in</button>
+    <button type="submit">Login →</button>
   </form>
+  <p class="login-help">New to QRD? <a href="{% url 'cards:signup-start' %}">Create a company</a></p>
 </section>
 {% endblock %}
