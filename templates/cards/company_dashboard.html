@@ -5,12 +5,12 @@
   <div class="company-identity">
     {% if company.logo %}<img class="company-logo" src="{{ company.logo.url }}" alt="{{ company.name }} logo">{% endif %}
     <div>
-      <a class="back-link" href="{% url 'cards:dashboard' %}">← All companies</a>
+      <a class="back-link" href="{% url 'cards:dashboard' %}">← {% if user.is_staff %}All companies{% else %}My companies{% endif %}</a>
       <h1>{{ company.name }}</h1>
       <p>{{ company.people.count }} card{{ company.people.count|pluralize }} · {{ company.active_card_count }} active</p>
     </div>
   </div>
-  <a class="button" href="{% url 'cards:person-create' %}">Add person</a>
+  {% if user.is_staff %}<a class="button" href="{% url 'cards:person-create' %}">Add person</a>{% endif %}
 </section>
 
 {% if company.people.all %}
@@ -38,13 +38,22 @@
       {% endif %}
     </div>
     <div class="tile-actions">
-      <a href="{% url 'cards:person-edit' person.pk %}">Edit</a>
-      {% if person.is_active %}<a href="{{ person.get_absolute_url }}">View card</a><a href="{% url 'cards:qr' person.public_id 'png' %}">Download QR</a>{% endif %}
+      {% if user.is_staff %}<a href="{% url 'cards:person-edit' person.pk %}">Edit</a>{% endif %}
+      {% if person.is_active %}<a href="{{ person.get_absolute_url }}">View card</a><button type="button" class="share-link" data-share-url="{{ person.permanent_url }}" data-share-name="{{ person.full_name }}">Share card</button><a href="{% url 'cards:qr' person.public_id 'png' %}">Download QR</a>{% endif %}
     </div>
   </article>
   {% endfor %}
 </div>
 {% else %}
-<section class="empty"><h2>No cards yet</h2><p>Add the first person for {{ company.name }} to create their digital card and QR code.</p><a class="button" href="{% url 'cards:person-create' %}">Add person</a></section>
+<section class="empty"><h2>No cards yet</h2><p>{% if user.is_staff %}Add the first person for {{ company.name }} to create their digital card and QR code.{% else %}Your company administrator has not added any cards yet.{% endif %}</p>{% if user.is_staff %}<a class="button" href="{% url 'cards:person-create' %}">Add person</a>{% endif %}</section>
 {% endif %}
 {% endblock %}
+{% block scripts %}<script>
+document.querySelectorAll('.share-link').forEach((button) => button.addEventListener('click', async () => {
+  const shareData = {title: `${button.dataset.shareName} | Smart QR`, url: button.dataset.shareUrl};
+  if (navigator.share) { await navigator.share(shareData); return; }
+  await navigator.clipboard.writeText(shareData.url);
+  const original = button.textContent; button.textContent = 'Link copied';
+  setTimeout(() => { button.textContent = original; }, 2000);
+}));
+</script>{% endblock %}

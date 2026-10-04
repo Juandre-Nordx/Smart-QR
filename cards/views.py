@@ -2,6 +2,7 @@ import io
 import qrcode
 import qrcode.image.svg
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -10,14 +11,19 @@ from .models import Company, Person
 
 def health(request): return JsonResponse({"status": "ok"})
 
-@staff_member_required
+@login_required
 def dashboard(request):
     companies = Company.objects.prefetch_related("people")
+    if not request.user.is_staff:
+        companies = companies.filter(dashboard_users=request.user)
     return render(request, "cards/dashboard.html", {"companies": companies})
 
-@staff_member_required
+@login_required
 def company_dashboard(request, pk):
-    company = get_object_or_404(Company.objects.prefetch_related("people"), pk=pk)
+    companies = Company.objects.prefetch_related("people")
+    if not request.user.is_staff:
+        companies = companies.filter(dashboard_users=request.user)
+    company = get_object_or_404(companies, pk=pk)
     return render(request, "cards/company_dashboard.html", {"company": company})
 
 @staff_member_required

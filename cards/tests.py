@@ -14,6 +14,8 @@ class CardTests(TestCase):
         self.company = Company.objects.create(name="Acme", billing_email="private@billing.test", billing_contact_name="Private Person")
         self.person = Person.objects.create(company=self.company, first_name="Zoë", last_name="Smith, Jr", email="zoe@example.test", biography="Hello", address="One; Road", mobile_phone="0123")
         self.staff = get_user_model().objects.create_user("staff", password="test-pass", is_staff=True)
+        self.company_user = get_user_model().objects.create_user("acme", password="company-pass")
+        self.company.dashboard_users.add(self.company_user)
     def test_dashboard_requires_staff(self):
         self.assertEqual(self.client.get(reverse("cards:dashboard")).status_code, 302)
         self.client.login(username="staff", password="test-pass")
@@ -31,7 +33,45 @@ class CardTests(TestCase):
 
     def test_company_dashboard_requires_staff(self):
         response = self.client.get(reverse("cards:company-dashboard", args=[self.company.pk]))
-        self.assertRedirects(response, f"{reverse('admin:login')}?next={reverse('cards:company-dashboard', args=[self.company.pk])}", fetch_redirect_response=False)
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('cards:company-dashboard', args=[self.company.pk])}", fetch_redirect_response=False)
+
+    def test_company_user_sees_only_assigned_company(self):
+        other_company = Company.objects.create(name="Private Other Co")
+        other_person = Person.objects.create(company=other_company, first_name="Hidden", last_name="Person")
+        self.client.login(username="acme", password="company-pass")
+
+        dashboard = self.client.get(reverse("cards:dashboard"))
+        self.assertContains(dashboard, self.company.name)
+        self.assertNotContains(dashboard, other_company.name)
+        self.assertContains(dashboard, "View and share cards")
+        self.assertNotContains(dashboard, "Monthly total")
+        self.assertNotContains(dashboard, "Edit company")
+
+        company_dashboard = self.client.get(reverse("cards:company-dashboard", args=[self.company.pk]))
+        self.assertContains(company_dashboard, self.person.full_name)
+        self.assertContains(company_dashboard, "Share card")
+        self.assertContains(company_dashboard, self.person.permanent_url())
+        self.assertNotContains(company_dashboard, "Add person")
+        self.assertNotContains(company_dashboard, reverse("cards:person-edit", args=[self.person.pk]))
+        self.assertEqual(self.client.get(reverse("cards:company-dashboard", args=[other_company.pk])).status_code, 404)
+        self.assertNotContains(company_dashboard, other_person.full_name)
+
+    def test_company_user_cannot_access_staff_management(self):
+        self.client.login(username="acme", password="company-pass")
+        for url in (
+            reverse("cards:people"),
+            reverse("cards:company-create"),
+            reverse("cards:company-edit", args=[self.company.pk]),
+            reverse("cards:person-create"),
+            reverse("cards:person-edit", args=[self.person.pk]),
+        ):
+            self.assertRedirects(self.client.get(url), f"{reverse('admin:login')}?next={url}", fetch_redirect_response=False)
+
+    def test_company_login_page(self):
+        response = self.client.get(reverse("login"))
+        self.assertContains(response, "Company dashboard")
+        login = self.client.post(reverse("login"), {"username": "acme", "password": "company-pass"})
+        self.assertRedirects(login, reverse("cards:dashboard"), fetch_redirect_response=False)
 
     def test_home_redirects_to_dashboard(self):
         self.assertRedirects(self.client.get(reverse("home")), reverse("cards:dashboard"), fetch_redirect_response=False)

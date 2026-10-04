@@ -19,6 +19,12 @@ def validate_image(value):
 
 class Company(models.Model):
     name = models.CharField(max_length=200)
+    dashboard_users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="companies",
+        help_text="Users who can sign in and view this company's cards.",
+    )
     legal_name = models.CharField(max_length=200, blank=True)
     registration_number = models.CharField(max_length=100, blank=True)
     vat_number = models.CharField(max_length=100, blank=True)
@@ -54,7 +60,7 @@ class Person(models.Model):
     created_at = models.DateTimeField(auto_now_add=True); updated_at = models.DateTimeField(auto_now=True)
     class Meta:
         ordering = ["last_name", "first_name"]
-        indexes = [models.Index(fields=["company", "is_active"])]
+        indexes = [models.Index(fields=["company", "is_active"], name="cards_perso_company_8981c1_idx")]
     def __str__(self): return self.full_name
     @property
     def full_name(self): return f"{self.first_name} {self.last_name}".strip()

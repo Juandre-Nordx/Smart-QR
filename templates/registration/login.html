@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Company login | Smart QR{% endblock %}
+{% block content %}
+<section class="login-panel">
+  <h1>Company dashboard</h1>
+  <p>Sign in to view and share your company’s employee cards.</p>
+  <form method="post" class="edit-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button type="submit">Sign in</button>
+  </form>
+</section>
+{% endblock %}
