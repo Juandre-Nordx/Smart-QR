@@ -26,6 +26,19 @@ USE_OBJECT_STORAGE = not DEBUG and bool(os.getenv("AWS_STORAGE_BUCKET_NAME"))
 SERVE_MEDIA = os.getenv("SERVE_MEDIA", str(not USE_OBJECT_STORAGE)).lower() in {"1", "true", "yes"}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "login"; LOGIN_REDIRECT_URL = "/dashboard/"; LOGOUT_REDIRECT_URL = "login"
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend"
+    if os.getenv("EMAIL_HOST")
+    else "django.core.mail.backends.console.EmailBackend",
+)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "QRD <no-reply@qrd.co.za>")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() in {"1", "true", "yes"}
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").lower() in {"1", "true", "yes"}
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = os.getenv("SECURE_COOKIES", str(not DEBUG)).lower() in {"1", "true", "yes"}
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE

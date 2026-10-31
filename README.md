@@ -24,7 +24,7 @@ The superuser is the development administrator; no default password or real cust
 
 Each company can have one or more private dashboard users. To give a customer
 access, sign in to `/admin/`, create a non-staff user under **Authentication and
-Authorization > Users**, then open the company and add that user under
+Authorization > Users**, enter an email address for password recovery, then open the company and add that user under
 **Dashboard users**. The customer can then sign in at `/accounts/login/` and can
 only open the dashboards assigned to their account. Company users can view and
 share active employee card links or download their QR codes, but cannot edit
@@ -40,6 +40,13 @@ companies, people, billing details, or cards. Staff users retain full access.
 | `CSRF_TRUSTED_ORIGINS` | Comma-separated HTTPS origins |
 | `DATABASE_URL` | PostgreSQL URL; local SQLite fallback |
 | `PUBLIC_BASE_URL` | Canonical HTTPS origin encoded into every QR |
+| `EMAIL_HOST` | SMTP server hostname; setting it automatically enables SMTP delivery |
+| `EMAIL_PORT` | SMTP server port; default `587` |
+| `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | SMTP login credentials |
+| `EMAIL_USE_TLS` | Enable SMTP STARTTLS; default `true` |
+| `EMAIL_USE_SSL` | Enable implicit SMTP TLS; default `false` |
+| `DEFAULT_FROM_EMAIL` | Sender shown on password-reset emails; default `QRD <no-reply@qrd.co.za>` |
+| `EMAIL_BACKEND` | Optional Django email backend; defaults to SMTP when `EMAIL_HOST` is set and console output otherwise |
 | `SECURE_COOKIES` | Secure session/CSRF cookies; defaults on outside debug |
 | `SECURE_SSL_REDIRECT` | Set `true` when the platform forwards HTTPS correctly |
 | `MEDIA_ROOT` | Persistent upload directory; automatically uses `/data/media` when a Railway volume is mounted at `/data` |
@@ -86,6 +93,11 @@ CSRF_TRUSTED_ORIGINS=https://smart-qr-production.up.railway.app
 PUBLIC_BASE_URL=https://smart-qr-production.up.railway.app
 SECURE_COOKIES=true
 SECURE_SSL_REDIRECT=true
+EMAIL_HOST=<your-smtp-host>
+EMAIL_PORT=587
+EMAIL_HOST_USER=<your-smtp-username>
+EMAIL_HOST_PASSWORD=<your-smtp-password>
+DEFAULT_FROM_EMAIL=QRD <no-reply@your-domain.co.za>
 ```
 
 Generate `SECRET_KEY` locally with:
