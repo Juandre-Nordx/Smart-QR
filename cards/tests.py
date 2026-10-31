@@ -1,7 +1,9 @@
 import io
+import re
 from decimal import Decimal
 from PIL import Image
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -97,8 +99,30 @@ class CardTests(TestCase):
     def test_company_login_page(self):
         response = self.client.get(reverse("login"))
         self.assertContains(response, "Login to QRD")
+        self.assertContains(response, reverse("password_reset"))
         login = self.client.post(reverse("login"), {"username": "acme", "password": "company-pass"})
         self.assertRedirects(login, reverse("cards:dashboard"), fetch_redirect_response=False)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_company_user_can_reset_a_forgotten_password(self):
+        self.company_user.email = "client@example.test"
+        self.company_user.save(update_fields=["email"])
+
+        response = self.client.post(reverse("password_reset"), {"email": self.company_user.email})
+        self.assertRedirects(response, reverse("password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.company_user.email])
+
+        reset_path = re.search(r"http://testserver(/accounts/reset/[^\s]+/)", mail.outbox[0].body).group(1)
+        response = self.client.get(reset_path)
+        self.assertEqual(response.status_code, 302)
+        set_password_path = response.url
+        response = self.client.post(set_password_path, {
+            "new_password1": "new-secure-password-123",
+            "new_password2": "new-secure-password-123",
+        })
+        self.assertRedirects(response, reverse("password_reset_complete"))
+        self.assertTrue(self.client.login(username="acme", password="new-secure-password-123"))
 
     def test_home_renders_landing_page_and_pricing(self):
         response = self.client.get(reverse("home"))
